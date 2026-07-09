@@ -1,10 +1,10 @@
 {
   "name": "mail-fleet-cli",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Bulk email CLI + dashboard with multi-provider support, markdown templates, and browser preview.",
   "type": "module",
   "bin": {
-    "mailfleet": "./dist/cli/main.js"
+    "mailfleet": "./dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc && npm run build:web",

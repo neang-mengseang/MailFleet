@@ -17,7 +17,27 @@ Bulk email CLI with multi-provider support, markdown templates, variable substit
 
 ## Quick Start
 
+### Option 1: Install from npm (Recommended)
+
 ```bash
+npm install -g mail-fleet-cli
+```
+
+After installation, you can use the CLI directly:
+
+```bash
+# Start the web dashboard
+npx mail-fleet-cli dashboard
+
+# Or use the build command
+npx mail-fleet-cli build
+```
+
+### Option 2: Clone from source
+
+```bash
+git clone https://github.com/neang-mengseang/MailFleet.git
+cd MailFleet
 npm install
 npm run build
 ```
