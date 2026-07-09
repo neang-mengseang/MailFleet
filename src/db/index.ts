@@ -109,7 +109,16 @@ export const db = {
     sqlite.prepare(
       `INSERT INTO batches (id, provider, subject, md_file, from_email, from_name, total, tags, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'running')`
-    ).run(id, b.provider, b.subject, b.md_file, b.from_email, b.from_name, b.total, b.tags);
+    ).run(
+      id,
+      b.provider,
+      b.subject,
+      b.md_file,
+      b.from_email,
+      b.from_name || '',
+      b.total,
+      b.tags || ''
+    );
     return id;
   },
 
@@ -123,7 +132,16 @@ export const db = {
     sqlite.prepare(
       `INSERT INTO sends (batch_id, recipient_email, recipient_name, subject, success, message_id, error, provider)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(s.batch_id, s.recipient_email, s.recipient_name, s.subject, s.success, s.message_id, s.error, s.provider);
+    ).run(
+      s.batch_id,
+      s.recipient_email,
+      s.recipient_name || '',
+      s.subject,
+      s.success,
+      s.message_id || '',
+      s.error || '',
+      s.provider
+    );
   },
 
   getBatches(limit = 50): BatchRow[] {
