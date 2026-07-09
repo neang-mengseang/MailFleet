@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Eye, Send, Users, FileText, Layout } from 'lucide-react';
+import { Eye, Send, Users, FileText, Layout, Code } from 'lucide-react';
 import { api, ProviderInfo, ContactFile } from '../api';
 import RichEditor, { Attachment } from './RichEditor';
 
@@ -30,6 +30,7 @@ export default function Compose({ providers }: { providers: ProviderInfo[] }) {
   const [recipientMode, setRecipientMode] = useState<'preset' | 'paste'>('paste');
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('none');
+  const [editorMode, setEditorMode] = useState<'richtext' | 'html'>('richtext');
 
   useEffect(() => {
     api.getContacts().then(setContactLists).catch(() => {});
@@ -162,11 +163,40 @@ export default function Compose({ providers }: { providers: ProviderInfo[] }) {
 
       <div className="panel">
         <div className="panel-title">Email Body</div>
-        <RichEditor
-          value={htmlContent}
-          onChange={handleEditorChange}
-          onAttachmentsChange={handleAttachmentsChange}
-        />
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <button
+            className={`btn ${editorMode === 'richtext' ? 'primary' : ''}`}
+            onClick={() => setEditorMode('richtext')}
+          >
+            <Layout size={16} /> Rich Text
+          </button>
+          <button
+            className={`btn ${editorMode === 'html' ? 'primary' : ''}`}
+            onClick={() => setEditorMode('html')}
+          >
+            <Code size={16} /> Raw HTML
+          </button>
+        </div>
+
+        {editorMode === 'richtext' ? (
+          <RichEditor
+            value={htmlContent}
+            onChange={handleEditorChange}
+            onAttachmentsChange={handleAttachmentsChange}
+          />
+        ) : (
+          <div className="form-group">
+            <label>Raw HTML (paste your HTML code here)</label>
+            <textarea
+              className="textarea"
+              rows={15}
+              value={htmlContent}
+              onChange={e => setHtmlContent(e.target.value)}
+              placeholder="<div>Your HTML code here...</div>"
+              style={{ fontFamily: 'monospace', fontSize: 13 }}
+            />
+          </div>
+        )}
       </div>
 
       <div className="panel">
