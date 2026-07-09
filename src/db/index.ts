@@ -11,6 +11,8 @@ fs.mkdirSync(DB_DIR, { recursive: true });
 const sqlite = new DatabaseSync(DB_PATH);
 sqlite.exec('PRAGMA journal_mode = WAL;');
 
+let isClosed = false;
+
 sqlite.exec(`
 CREATE TABLE IF NOT EXISTS batches (
   id TEXT PRIMARY KEY,
@@ -191,6 +193,13 @@ export const db = {
   },
 
   close(): void {
-    sqlite.close();
+    if (isClosed) return;
+    try {
+      sqlite.close();
+      isClosed = true;
+    } catch (e) {
+      // Database already closed or not open, ignore error
+      isClosed = true;
+    }
   },
 };
