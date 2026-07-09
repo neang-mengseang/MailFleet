@@ -1,10 +1,10 @@
 {
-  "name": "mail.fleet",
+  "name": "mail-fleet-cli",
   "version": "1.0.0",
   "description": "Bulk email CLI + dashboard with multi-provider support, markdown templates, and browser preview.",
   "type": "module",
   "bin": {
-    "mailfleet": "./dist/cli/index.js"
+    "mailfleet": "./dist/cli/main.js"
   },
   "scripts": {
     "build": "tsc && npm run build:web",
@@ -30,6 +30,22 @@
     "transactional-email",
     "email-templates"
   ],
+  "pkg": {
+    "scripts": [
+      "dist/**/*.js",
+      "node_modules/commander/**/*.js"
+    ],
+    "assets": [
+      "web/dist/**/*",
+      "examples/**/*"
+    ],
+    "targets": [
+      "node18-win-x64",
+      "node18-macos-x64",
+      "node18-linux-x64"
+    ],
+    "outputPath": "releases"
+  },
   "dependencies": {
     "commander": "^12.1.0",
     "cors": "^2.8.5",
