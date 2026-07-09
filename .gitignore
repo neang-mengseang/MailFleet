@@ -12,3 +12,4 @@ mailfleet/
 *.log
 .env
 .env.local
+.npmignore
