@@ -1,0 +1,14 @@
+node_modules/
+dist/
+web/dist/
+web/node_modules/
+*.db
+*.db-wal
+*.db-shm
+.mailfleet/
+mailfleet/
+*.tsbuildinfo
+.DS_Store
+*.log
+.env
+.env.local

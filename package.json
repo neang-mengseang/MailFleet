@@ -1,0 +1,33 @@
+{
+  "name": "mailfleet",
+  "version": "1.0.0",
+  "description": "Bulk email CLI + dashboard with multi-provider support, markdown templates, and browser preview.",
+  "type": "module",
+  "bin": {
+    "mailfleet": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc && npm run build:web",
+    "build:web": "cd web && npm run build",
+    "dev:web": "cd web && npm run dev",
+    "dev:server": "tsx watch src/server/index.ts",
+    "start": "node dist/cli/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.6.0",
+    "express": "^4.21.2",
+    "marked": "^15.0.6",
+    "open": "^10.1.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
