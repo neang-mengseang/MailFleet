@@ -1,5 +1,5 @@
 {
-  "name": "mailfleet",
+  "name": "mail.fleet",
   "version": "1.0.0",
   "description": "Bulk email CLI + dashboard with multi-provider support, markdown templates, and browser preview.",
   "type": "module",
@@ -14,6 +14,22 @@
     "start": "node dist/cli/index.js",
     "typecheck": "tsc --noEmit"
   },
+  "author": "neang-mengseang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neang-mengseang/MailFleet.git"
+  },
+  "homepage": "https://github.com/neang-mengseang/MailFleet#readme",
+  "keywords": [
+    "email",
+    "bulk-email",
+    "cli",
+    "markdown",
+    "email-marketing",
+    "transactional-email",
+    "email-templates"
+  ],
   "dependencies": {
     "commander": "^12.1.0",
     "cors": "^2.8.5",
