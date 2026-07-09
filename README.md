@@ -22,6 +22,13 @@ npm install
 npm run build
 ```
 
+Or use the CLI build command:
+
+```bash
+npm install
+node dist/cli/index.js build
+```
+
 This builds both the CLI (TypeScript → `dist/`) and the web dashboard (`web/dist/`).
 
 ### Configure a provider
@@ -71,6 +78,16 @@ node dist/cli/index.js dashboard
 Opens `http://localhost:3210` in your browser with a full management UI.
 
 ## CLI Commands
+
+### `build`
+
+Build MailFleet CLI and web dashboard.
+
+```
+Options:
+  -w, --web-only              Build only the web dashboard
+  -c, --cli-only              Build only the CLI
+```
 
 ### `send`
 
@@ -262,6 +279,9 @@ npm run typecheck
 
 # Build everything
 npm run build
+
+# Or use CLI build command
+node dist/cli/index.js build
 ```
 
 ## Project Structure

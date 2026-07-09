@@ -8,6 +8,7 @@ import { providersCommand } from './providers-cmd.js';
 import { templateCommand } from './template.js';
 import { contactsCommand } from './contacts.js';
 import { messagesCommand } from './messages.js';
+import { buildCommand } from './build.js';
 
 export const program = new Command();
 
@@ -25,3 +26,4 @@ program.addCommand(providersCommand);
 program.addCommand(templateCommand);
 program.addCommand(contactsCommand);
 program.addCommand(messagesCommand);
+program.addCommand(buildCommand);
