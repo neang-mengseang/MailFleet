@@ -1,6 +1,6 @@
 {
   "name": "mail-fleet-cli",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Bulk email CLI + dashboard with multi-provider support, markdown templates, and browser preview.",
   "type": "module",
   "bin": {

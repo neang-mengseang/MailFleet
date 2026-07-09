@@ -131,7 +131,11 @@ export async function startServer(port: number, openBrowser: boolean): Promise<v
         if (!file) return res.status(400).json({ error: `Contact list not found: ${contactList}` });
         recipientList = parseRecipients(file);
       } else if (Array.isArray(recipients)) {
-        recipientList = recipients.map((r: any) => ({ email: r.email, name: r.name, data: r }));
+        recipientList = recipients.map((r: any) => ({
+          email: r.email,
+          name: r.name || r.email?.split('@')[0] || '',
+          data: { ...r, name: r.name || r.email?.split('@')[0] || '' }
+        }));
       } else {
         recipientList = parseRecipients(recipients);
       }

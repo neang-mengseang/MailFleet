@@ -19,7 +19,7 @@ export default function Compose({ providers }: { providers: ProviderInfo[] }) {
   const [recipientsText, setRecipientsText] = useState('name,email\nAlice,alice@example.com\nBob,bob@example.com');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [previewHtml, setPreviewHtml] = useState('');
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(true); // Default to show preview
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<string[]>([]);
   const [summary, setSummary] = useState<any>(null);
@@ -45,16 +45,43 @@ export default function Compose({ providers }: { providers: ProviderInfo[] }) {
     setAttachments(atts);
   }, []);
 
-  const handlePreview = async () => {
-    try {
-      const recipients = await getRecipients();
-      const first = recipients[0] ?? {};
-      const res = await api.previewWithTemplate(htmlContent, subject, first, selectedTemplate);
-      setPreviewHtml(res.html);
-      setShowPreview(true);
-    } catch (e: any) {
-      setError(e.message);
+  // Auto-update preview when content changes
+  useEffect(() => {
+    if (showPreview) {
+      const updatePreview = async () => {
+        try {
+          let recipients: Record<string, any>[];
+          if (recipientMode === 'preset' && selectedContactList) {
+            const detail = await api.getContact(selectedContactList);
+            recipients = parseRecipients(detail.content);
+          } else if (recipientMode === 'paste') {
+            recipients = parseRecipients(recipientsText);
+          } else {
+            recipients = [];
+          }
+          const first = recipients[0] ?? {};
+          const res = await api.previewWithTemplate(htmlContent, subject, first, selectedTemplate);
+          setPreviewHtml(res.html);
+        } catch (e: any) {
+          // Don't show error for preview updates
+        }
+      };
+      updatePreview();
     }
+  }, [htmlContent, subject, selectedTemplate, recipientMode, selectedContactList, recipientsText, showPreview]);
+
+  const parseRecipients = (csv: string): Record<string, any>[] => {
+    const lines = csv.trim().split('\n').filter(l => l.trim());
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.trim());
+      const obj: Record<string, any> = {};
+      headers.forEach((h, i) => obj[h] = values[i] ?? '');
+      if (!obj.name && obj.email) obj.name = obj.email.split('@')[0];
+      // Ensure name is always in the data object for template substitution
+      return { ...obj, name: obj.name || (obj.email ? obj.email.split('@')[0] : '') };
+    });
   };
 
   const getRecipients = async (): Promise<Record<string, any>[]> => {
@@ -120,159 +147,190 @@ export default function Compose({ providers }: { providers: ProviderInfo[] }) {
 
       {error && <div className="toast error">{error}</div>}
 
-      <div className="panel">
-        <div className="panel-title">Send Configuration</div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Provider</label>
-            <select className="select" value={provider} onChange={e => setProvider(e.target.value)}>
-              <option value="">Select provider...</option>
-              {configuredProviders.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>From Email</label>
-            <input className="input" value={fromEmail} onChange={e => setFromEmail(e.target.value)} placeholder="you@example.com" />
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>From Name</label>
-            <input className="input" value={fromName} onChange={e => setFromName(e.target.value)} placeholder="Your Name" />
-          </div>
-          <div className="form-group">
-            <label>Subject</label>
-            <input className="input" value={subject} onChange={e => setSubject(e.target.value)} placeholder="Hello {{name}}" />
-          </div>
-        </div>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+        <button 
+          className={`btn ${showPreview ? 'primary' : ''}`}
+          onClick={() => setShowPreview(!showPreview)}
+        >
+          <Eye size={16} /> {showPreview ? 'Hide Preview' : 'Show Preview'}
+        </button>
       </div>
 
-      <div className="panel">
-        <div className="panel-title"><Layout size={16} style={{ display: 'inline', marginRight: 6 }} /> Email Template</div>
-        <div className="form-group">
-          <label>Wrap your email with a template (header/footer)</label>
-          <select className="select" value={selectedTemplate} onChange={e => setSelectedTemplate(e.target.value)}>
-            {emailTemplates.map(t => (
-              <option key={t.id} value={t.id}>{t.name} — {t.description}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="panel">
-        <div className="panel-title">Email Body</div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <button
-            className={`btn ${editorMode === 'richtext' ? 'primary' : ''}`}
-            onClick={() => setEditorMode('richtext')}
-          >
-            <Layout size={16} /> Rich Text
-          </button>
-          <button
-            className={`btn ${editorMode === 'html' ? 'primary' : ''}`}
-            onClick={() => setEditorMode('html')}
-          >
-            <Code size={16} /> Raw HTML
-          </button>
-        </div>
-
-        {editorMode === 'richtext' ? (
-          <RichEditor
-            value={htmlContent}
-            onChange={handleEditorChange}
-            onAttachmentsChange={handleAttachmentsChange}
-          />
-        ) : (
-          <div className="form-group">
-            <label>Raw HTML (paste your HTML code here)</label>
-            <textarea
-              className="textarea"
-              rows={15}
-              value={htmlContent}
-              onChange={e => setHtmlContent(e.target.value)}
-              placeholder="<div>Your HTML code here...</div>"
-              style={{ fontFamily: 'monospace', fontSize: 13 }}
-            />
-          </div>
-        )}
-      </div>
-
-      <div className="panel">
-        <div className="panel-title">Recipients</div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <button
-            className={`btn ${recipientMode === 'preset' ? 'primary' : ''}`}
-            onClick={() => setRecipientMode('preset')}
-          >
-            <Users size={16} /> Contact List
-          </button>
-          <button
-            className={`btn ${recipientMode === 'paste' ? 'primary' : ''}`}
-            onClick={() => setRecipientMode('paste')}
-          >
-            <FileText size={16} /> Paste CSV
-          </button>
-        </div>
-
-        {recipientMode === 'preset' ? (
-          <div className="form-group">
-            <label>Select a saved contact list</label>
-            {contactLists.length === 0 ? (
-              <div style={{ color: 'var(--text-dim)', fontSize: 13 }}>
-                No contact lists saved. Go to the Contacts page to upload one, or switch to Paste CSV.
-              </div>
-            ) : (
-              <>
-                <select
-                  className="select"
-                  value={selectedContactList}
-                  onChange={e => setSelectedContactList(e.target.value)}
-                >
-                  <option value="">Select a contact list...</option>
-                  {contactLists.map(c => (
-                    <option key={c.name} value={c.name}>
-                      {c.name} ({c.count} recipients, {c.filename})
-                    </option>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="panel">
+            <div className="panel-title">Send Configuration</div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Provider</label>
+                <select className="select" value={provider} onChange={e => setProvider(e.target.value)}>
+                  <option value="">Select provider...</option>
+                  {configuredProviders.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
-                {selectedContactList && (
-                  <div style={{ marginTop: 8, color: 'var(--text-dim)', fontSize: 13 }}>
-                    {contactLists.find(c => c.name === selectedContactList)?.count} recipients will receive this email.
-                  </div>
-                )}
-              </>
+              </div>
+              <div className="form-group">
+                <label>From Email</label>
+                <input className="input" value={fromEmail} onChange={e => setFromEmail(e.target.value)} placeholder="you@example.com" />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>From Name</label>
+                <input className="input" value={fromName} onChange={e => setFromName(e.target.value)} placeholder="Your Name" />
+              </div>
+              <div className="form-group">
+                <label>Subject</label>
+                <input className="input" value={subject} onChange={e => setSubject(e.target.value)} placeholder="Hello {{name}}" />
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-title"><Layout size={16} style={{ display: 'inline', marginRight: 6 }} /> Email Template</div>
+            <div className="form-group">
+              <label>Wrap your email with a template (header/footer)</label>
+              <select className="select" value={selectedTemplate} onChange={e => setSelectedTemplate(e.target.value)}>
+                {emailTemplates.map(t => (
+                  <option key={t.id} value={t.id}>{t.name} — {t.description}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-title">Email Body</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <button
+                className={`btn ${editorMode === 'richtext' ? 'primary' : ''}`}
+                onClick={() => setEditorMode('richtext')}
+              >
+                <Layout size={16} /> Rich Text
+              </button>
+              <button
+                className={`btn ${editorMode === 'html' ? 'primary' : ''}`}
+                onClick={() => setEditorMode('html')}
+              >
+                <Code size={16} /> Raw HTML
+              </button>
+            </div>
+
+            {editorMode === 'richtext' ? (
+              <RichEditor
+                value={htmlContent}
+                onChange={handleEditorChange}
+                onAttachmentsChange={handleAttachmentsChange}
+              />
+            ) : (
+              <div className="form-group">
+                <label>Raw HTML (paste your HTML code here)</label>
+                <textarea
+                  className="textarea"
+                  rows={15}
+                  value={htmlContent}
+                  onChange={e => setHtmlContent(e.target.value)}
+                  placeholder="<div>Your HTML code here...</div>"
+                  style={{ fontFamily: 'monospace', fontSize: 13 }}
+                />
+              </div>
             )}
           </div>
-        ) : (
-          <div className="form-group">
-            <label>Recipients (CSV format)</label>
-            <textarea
-              className="textarea"
-              rows={6}
-              value={recipientsText}
-              onChange={e => setRecipientsText(e.target.value)}
-            />
+
+          <div className="panel">
+            <div className="panel-title">Recipients</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <button
+                className={`btn ${recipientMode === 'preset' ? 'primary' : ''}`}
+                onClick={() => setRecipientMode('preset')}
+              >
+                <Users size={16} /> Contact List
+              </button>
+              <button
+                className={`btn ${recipientMode === 'paste' ? 'primary' : ''}`}
+                onClick={() => setRecipientMode('paste')}
+              >
+                <FileText size={16} /> Paste CSV
+              </button>
+            </div>
+
+            {recipientMode === 'preset' ? (
+              <div className="form-group">
+                <label>Select a saved contact list</label>
+                {contactLists.length === 0 ? (
+                  <div style={{ color: 'var(--text-dim)', fontSize: 13 }}>
+                    No contact lists saved. Go to the Contacts page to upload one, or switch to Paste CSV.
+                  </div>
+                ) : (
+                  <>
+                    <select
+                      className="select"
+                      value={selectedContactList}
+                      onChange={e => setSelectedContactList(e.target.value)}
+                    >
+                      <option value="">Select a contact list...</option>
+                      {contactLists.map(c => (
+                        <option key={c.name} value={c.name}>
+                          {c.name} ({c.count} recipients, {c.filename})
+                        </option>
+                      ))}
+                    </select>
+                    {selectedContactList && (
+                      <div style={{ marginTop: 8, color: 'var(--text-dim)', fontSize: 13 }}>
+                        {contactLists.find(c => c.name === selectedContactList)?.count} recipients will receive this email.
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="form-group">
+                <label>Recipients (CSV format)</label>
+                <textarea
+                  className="textarea"
+                  rows={6}
+                  value={recipientsText}
+                  onChange={e => setRecipientsText(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            <button className="btn primary" onClick={handleSend} disabled={sending}>
+              <Send size={16} /> {sending ? 'Sending...' : 'Send'}
+            </button>
+          </div>
+        </div>
+
+        {showPreview && (
+          <div style={{ flex: 1, minWidth: 400, maxWidth: 600 }}>
+            <div className="panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <div className="panel-title">Live Preview</div>
+              <div style={{ flex: 1, minHeight: 400 }}>
+                {previewHtml ? (
+                  <iframe 
+                    className="preview-frame" 
+                    srcDoc={previewHtml} 
+                    title="Email Preview" 
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                  />
+                ) : (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    height: '100%', 
+                    color: 'var(--text-dim)' 
+                  }}>
+                    Preview will appear here
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-        <button className="btn" onClick={handlePreview} disabled={sending}>
-          <Eye size={16} /> Preview
-        </button>
-        <button className="btn primary" onClick={handleSend} disabled={sending}>
-          <Send size={16} /> {sending ? 'Sending...' : 'Send'}
-        </button>
-      </div>
-
-      {showPreview && previewHtml && (
-        <div className="panel">
-          <div className="panel-title">Preview</div>
-          <iframe className="preview-frame" srcDoc={previewHtml} title="Email Preview" />
-        </div>
-      )}
 
       {progress.length > 0 && (
         <div className="panel">
@@ -286,17 +344,4 @@ export default function Compose({ providers }: { providers: ProviderInfo[] }) {
       )}
     </div>
   );
-}
-
-function parseRecipients(csv: string): Record<string, any>[] {
-  const lines = csv.trim().split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const values = line.split(',').map(v => v.trim());
-    const obj: Record<string, any> = {};
-    headers.forEach((h, i) => obj[h] = values[i] ?? '');
-    if (!obj.name && obj.email) obj.name = obj.email.split('@')[0];
-    return obj;
-  });
 }
