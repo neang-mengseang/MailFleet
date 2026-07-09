@@ -2,6 +2,8 @@
 
 Bulk email CLI with multi-provider support, markdown templates, variable substitution, browser preview, and a web dashboard for management.
 
+**Author:** Xeleste
+
 ## Features
 
 - **5 email providers**: Brevo, Resend, SendGrid, Mailgun, SendPulse

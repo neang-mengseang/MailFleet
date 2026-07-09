@@ -1,6 +1,6 @@
 {
   "name": "mail-fleet-cli",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Bulk email CLI + dashboard with multi-provider support, markdown templates, and browser preview.",
   "type": "module",
   "bin": {
@@ -14,7 +14,7 @@
     "start": "node dist/cli/index.js",
     "typecheck": "tsc --noEmit"
   },
-  "author": "neang-mengseang",
+  "author": "Xeleste",
   "license": "MIT",
   "repository": {
     "type": "git",
